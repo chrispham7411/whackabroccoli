@@ -10,6 +10,7 @@
       height: 100%;
       font-family: system-ui, sans-serif;
       overflow: hidden;
+      cursor: crosshair;
     }
 
     /* Kitchen-table background */
@@ -37,14 +38,30 @@
 
     h1 {
       position: absolute;
-      top: 20px;
+      top: 16px;
       width: 100%;
       text-align: center;
       color: #fff8e7;
       text-shadow: 2px 2px 0 #4a2c12;
-      font-size: 42px;
+      font-size: 38px;
       margin: 0;
       letter-spacing: 2px;
+    }
+
+    /* Scoreboard pill under the title */
+    #scoreboard {
+      position: absolute;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff8e7;
+      color: #4a2c12;
+      font-size: 28px;
+      font-weight: bold;
+      padding: 8px 28px;
+      border-radius: 999px;
+      box-shadow: 0 4px 0 #4a2c12;
+      letter-spacing: 1px;
     }
 
     .grid {
@@ -64,7 +81,17 @@
         inset 0 10px 15px rgba(255,255,255,0.05),
         0 6px 0 rgba(0,0,0,0.4);
       position: relative;
-      overflow: hidden;
+      /* overflow visible so floating +1 can escape upward */
+      overflow: visible;
+    }
+
+    /* A clipping mask: only the inside-the-hole part of the creature is hidden */
+    .hole::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      pointer-events: none;
     }
 
     /* The thing that pops out of a hole (broccoli on a fork, for now) */
@@ -79,7 +106,7 @@
       transform: translateY(100%);
       transition: transform 0.18s ease-out;
       user-select: none;
-      pointer-events: none;
+      cursor: pointer;
     }
 
     .creature.up {
@@ -89,19 +116,54 @@
     .creature .head {
       font-size: 80px;
       line-height: 1;
+      pointer-events: none;
     }
 
-    /* The fork: rotated so the handle points down (the "stick" coming out of the hole) */
     .creature .stick {
       font-size: 50px;
       line-height: 1;
       margin-top: -15px;
       transform: rotate(180deg);
+      pointer-events: none;
+    }
+
+    /* Floating +1 that rises out of the hole when a broccoli is whacked */
+    .score-pop {
+      position: absolute;
+      left: 50%;
+      top: -10px;
+      transform: translateX(-50%);
+      font-size: 44px;
+      font-weight: 900;
+      color: #ffd84d;
+      text-shadow:
+        2px 2px 0 #4a2c12,
+        -2px -2px 0 #4a2c12,
+        2px -2px 0 #4a2c12,
+        -2px 2px 0 #4a2c12;
+      pointer-events: none;
+      animation: floatUp 800ms ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      from {
+        transform: translate(-50%, 0) scale(0.6);
+        opacity: 0;
+      }
+      20% {
+        transform: translate(-50%, -10px) scale(1.2);
+        opacity: 1;
+      }
+      to {
+        transform: translate(-50%, -120px) scale(1);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
   <h1>WHACK-A-BROCCOLI</h1>
+  <div id="scoreboard">SCORE: <span id="score">0</span></div>
 
   <div class="grid" id="grid">
     <div class="hole"></div>
@@ -116,38 +178,64 @@
   </div>
 
   <script>
-    // How fast new broccoli pop up, and how long they stay before going back down.
     const POP_EVERY_MS = 900;
     const STAY_UP_MS  = 1100;
 
     const holes = document.querySelectorAll('.hole');
+    const scoreEl = document.getElementById('score');
+    let score = 0;
+
+    function bumpScore(by) {
+      score += by;
+      scoreEl.textContent = score;
+    }
+
+    function floatPlusOne(hole) {
+      const pop = document.createElement('div');
+      pop.className = 'score-pop';
+      pop.textContent = '+1';
+      hole.appendChild(pop);
+      // Remove the +1 after its animation finishes so the DOM stays clean.
+      setTimeout(() => pop.remove(), 800);
+    }
+
+    function removeCreature(hole, creature) {
+      // Guard against double-removal (auto-hide + click can race).
+      if (creature._gone) return;
+      creature._gone = true;
+      if (creature._hideTimer) clearTimeout(creature._hideTimer);
+      creature.classList.remove('up');
+      setTimeout(() => {
+        creature.remove();
+        delete hole.dataset.busy;
+      }, 200);
+    }
 
     function popRandomBroccoli() {
-      // Pick a hole that isn't already busy.
       const free = [...holes].filter(h => !h.dataset.busy);
       if (free.length === 0) return;
       const hole = free[Math.floor(Math.random() * free.length)];
       hole.dataset.busy = '1';
 
-      // Build the broccoli-on-fork: 🥦 stacked on top of an upside-down 🍴.
       const creature = document.createElement('div');
       creature.className = 'creature';
       creature.innerHTML = '<span class="head">🥦</span><span class="stick">🍴</span>';
+
+      creature.addEventListener('click', () => {
+        if (creature._gone) return;
+        bumpScore(1);
+        floatPlusOne(hole);
+        removeCreature(hole, creature);
+      });
+
       hole.appendChild(creature);
 
-      // Wait one frame so the browser sees the start position, then trigger the rise.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => creature.classList.add('up'));
       });
 
-      // Drop it back down after STAY_UP_MS, then remove it.
-      setTimeout(() => {
-        creature.classList.remove('up');
-        setTimeout(() => {
-          creature.remove();
-          delete hole.dataset.busy;
-        }, 200);
-      }, STAY_UP_MS);
+      // Auto-hide if it's not whacked in time.
+      creature._hideTimer = setTimeout(() => removeCreature(hole, creature), STAY_UP_MS);
     }
 
     setInterval(popRandomBroccoli, POP_EVERY_MS);

@@ -49,8 +49,8 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 |------|----------------------------------------|--------|
 | v1 | "Make a 3×3 grid of holes on a kitchen-table background." | ✅ |
 | v2 | "Make a broccoli on a fork pop up in a random hole every second." | ✅ |
-| v3 | "When I click a broccoli, it disappears and a +1 floats up." | ⏳ |
-| v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | |
+| v3 | "When I click a broccoli, it disappears and a +1 floats up." | ✅ |
+| v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ⏳ |
 | v5 | "Add a hand cursor that slams down, a YUCK! popup, and a splat sound." | |
 | v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | |
 | v7 | "Make it two players: A/S/D/F vs J/K/L/;." | |
@@ -109,10 +109,20 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
 - First JavaScript in the project — `setInterval` keeps the game going.
 - **Kids' reaction:** *(fill in after they see it!)*
 
-### v3 — ⏳ next
-- Click a broccoli → it disappears, a "+1" floats up from the hole, score
-  ticks up.
-- This is the first time clicking actually *does* something.
+### v3 — shipped
+- Click a broccoli → it vanishes, a yellow "+1" floats up out of the hole,
+  scoreboard at the top ticks up by 1.
+- Cursor is now a crosshair so it feels like aiming.
+- New keyframe animation `floatUp` for the +1 pop.
+- Bug we already thought about: clicking *and* the auto-hide could fire at
+  the same time and double-free the hole — guarded with a `_gone` flag.
+- **Kids' reaction:** *(fill in!)*
+
+### v4 — ⏳ next
+- Sometimes a candy pops up instead of a broccoli (~1 in 4?).
+- Whack the candy = bomb explodes + score goes down by 1.
+- First time the kids see *consequences* — not everything that pops up is
+  good.
 
 ---
 
