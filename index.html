@@ -48,20 +48,37 @@
       letter-spacing: 2px;
     }
 
-    /* Scoreboard pill under the title */
-    #scoreboard {
+    /* HUD: two pills side-by-side (score + time) */
+    #hud {
       position: absolute;
       top: 70px;
       left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      gap: 14px;
+    }
+
+    .pill {
       background: #fff8e7;
       color: #4a2c12;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: bold;
-      padding: 8px 28px;
+      padding: 8px 24px;
       border-radius: 999px;
       box-shadow: 0 4px 0 #4a2c12;
       letter-spacing: 1px;
+    }
+
+    /* Last 5 seconds: pulse the time pill red so kids feel the pressure */
+    .pill.urgent {
+      background: #ffd4d4;
+      color: #b00020;
+      animation: pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.08); }
     }
 
     .grid {
@@ -231,11 +248,91 @@
       25%   { transform: translate(-50%, -5px) scale(1.25) rotate(6deg);  opacity: 1; }
       to    { transform: translate(-50%, -50px) scale(1) rotate(-4deg);   opacity: 0; }
     }
+
+    /* GAME OVER overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .overlay.show {
+      display: flex;
+      animation: overlayIn 200ms ease-out;
+    }
+
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .overlay-card {
+      background: #fff8e7;
+      color: #4a2c12;
+      padding: 36px 60px 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 10px 0 #4a2c12;
+      animation: cardIn 300ms cubic-bezier(.2,1.4,.6,1.1);
+    }
+
+    @keyframes cardIn {
+      from { transform: scale(0.6); }
+      to   { transform: scale(1); }
+    }
+
+    .overlay-card h2 {
+      font-size: 56px;
+      margin: 0 0 16px;
+      letter-spacing: 3px;
+    }
+
+    .overlay-card .label {
+      font-size: 18px;
+      margin: 0;
+      letter-spacing: 2px;
+      color: #7a5230;
+    }
+
+    .overlay-card .final-score {
+      font-size: 90px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 6px 0 24px;
+      color: #d4691f;
+    }
+
+    .overlay-card button {
+      font-size: 24px;
+      font-weight: 900;
+      background: #ff9836;
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 999px;
+      box-shadow: 0 5px 0 #b85e1a;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: transform 0.08s, box-shadow 0.08s;
+      font-family: inherit;
+    }
+    .overlay-card button:hover { transform: translateY(-1px); }
+    .overlay-card button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #b85e1a;
+    }
   </style>
 </head>
 <body>
   <h1>WHACK-A-BROCCOLI</h1>
-  <div id="scoreboard">SCORE: <span id="score">0</span></div>
+  <div id="hud">
+    <div class="pill">SCORE: <span id="score">0</span></div>
+    <div class="pill" id="timePill">TIME: <span id="time">30</span></div>
+  </div>
 
   <div class="grid" id="grid">
     <div class="hole"></div>
@@ -249,14 +346,34 @@
     <div class="hole"></div>
   </div>
 
+  <div class="overlay" id="overlay">
+    <div class="overlay-card">
+      <h2>GAME OVER</h2>
+      <p class="label">FINAL SCORE</p>
+      <div class="final-score" id="finalScore">0</div>
+      <button id="playAgain">PLAY AGAIN</button>
+    </div>
+  </div>
+
   <script>
     const POP_EVERY_MS = 900;
     const STAY_UP_MS  = 1100;
-    const CANDY_CHANCE = 0.25; // ~1 in 4 pops is candy — don't whack it!
+    const CANDY_CHANCE = 0.25;     // ~1 in 4 pops is candy — don't whack it!
+    const GAME_LENGTH_SEC = 30;    // round length
 
     const holes = document.querySelectorAll('.hole');
     const scoreEl = document.getElementById('score');
+    const timeEl  = document.getElementById('time');
+    const timePill = document.getElementById('timePill');
+    const overlay = document.getElementById('overlay');
+    const finalScoreEl = document.getElementById('finalScore');
+    const playAgainBtn = document.getElementById('playAgain');
+
     let score = 0;
+    let timeLeft = GAME_LENGTH_SEC;
+    let gameOver = false;
+    let spawnTimer = null;
+    let countdownTimer = null;
 
     // Keyboard mapping: each key whacks the hole at the same spot on the grid.
     //   Q W E
@@ -374,6 +491,7 @@
     }
 
     function whack(hole, creature) {
+      if (gameOver) return;
       if (creature._gone) return;
       handSlam(hole);
       if (creature.dataset.kind === 'candy') {
@@ -423,6 +541,7 @@
 
     // Keyboard: when a mapped key is pressed, whack the broccoli in that hole (if any).
     document.addEventListener('keydown', (e) => {
+      if (gameOver) return;
       if (e.repeat) return;
       const idx = KEY_TO_HOLE[e.key.toLowerCase()];
       if (idx === undefined) return;
@@ -433,7 +552,53 @@
       whack(hole, creature);
     });
 
-    setInterval(popRandomThing, POP_EVERY_MS);
+    function clearAllHoles() {
+      holes.forEach(h => {
+        if (h._creature) {
+          if (h._creature._hideTimer) clearTimeout(h._creature._hideTimer);
+          h._creature.remove();
+          delete h._creature;
+        }
+        delete h.dataset.busy;
+      });
+    }
+
+    function tick() {
+      timeLeft -= 1;
+      timeEl.textContent = timeLeft;
+      if (timeLeft <= 5) timePill.classList.add('urgent');
+      if (timeLeft <= 0) endGame();
+    }
+
+    function endGame() {
+      gameOver = true;
+      clearInterval(spawnTimer);
+      clearInterval(countdownTimer);
+      spawnTimer = null;
+      countdownTimer = null;
+      finalScoreEl.textContent = score;
+      overlay.classList.add('show');
+    }
+
+    function startGame() {
+      // Reset state
+      score = 0;
+      scoreEl.textContent = '0';
+      timeLeft = GAME_LENGTH_SEC;
+      timeEl.textContent = timeLeft;
+      timePill.classList.remove('urgent');
+      gameOver = false;
+      overlay.classList.remove('show');
+      clearAllHoles();
+
+      // Start the two heartbeats: one spawns things, one counts down.
+      spawnTimer = setInterval(popRandomThing, POP_EVERY_MS);
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    playAgainBtn.addEventListener('click', startGame);
+
+    startGame();
   </script>
 </body>
 </html>

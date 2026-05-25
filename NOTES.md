@@ -53,8 +53,8 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 | v3.5 | "It works with mouse but not with keyboard." (Q/W/E A/S/D Z/X/C) | ✅ |
 | v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ✅ |
 | v5 | "Hand slam, YUCK!/YUM…NO! text, splat sound." | ✅ |
-| v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | ⏳ |
-| v7 | "Make it two players: A/S/D/F vs J/K/L/;." | |
+| v6 | "30-second timer + 'GAME OVER' screen + Play Again." | ✅ |
+| v7 | "Make it two players: A/S/D/F vs J/K/L/;." | ⏳ |
 | v8 | "When broccoli explodes, the bits fall down and pile up at the bottom." | |
 | v9 | Kids' wishlist (see below) | |
 
@@ -151,11 +151,27 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
   your speakers play. We didn't download a sound — we *generated* one.
 - **Kids' reaction:** *(fill in!)*
 
-### v6 — ⏳ next
-- 30-second timer counts down at the top.
-- When it hits 0: stop the broccoli/candy from spawning, freeze the score,
-  show a "GAME OVER" overlay with the final score.
-- A "Play Again" button to reset and start fresh.
+### v6 — shipped (the game is actually a game now)
+- New HUD: two pills, **SCORE** and **TIME**, side-by-side under the title.
+- 30-second countdown. Last 5 seconds: the time pill turns red and pulses.
+- At 0: spawning stops, all clicks/keypresses are ignored (`gameOver` flag),
+  big GAME OVER overlay drops in with the final score and a juicy orange
+  "PLAY AGAIN" button.
+- Play Again resets *everything*: clears holes, resets score & timer,
+  removes urgent state, starts the two intervals fresh.
+- Code lesson worth telling the kids: the game now has **two heartbeats**.
+  One spawns broccoli (`spawnTimer`), one ticks the clock (`countdownTimer`).
+  They run independently. That's a great mental model for how real apps work
+  — lots of little timers and listeners doing their own thing at once.
+- **Kids' reaction:** *(fill in!)*
+
+### v7 — ⏳ next
+- Two players on one keyboard.
+- Player 1: **A / S / D / F** → owns the 4 left-side holes
+- Player 2: **J / K / L / ;** → owns the 4 right-side holes
+- Middle hole = shared bonus (either player can hit it)
+- Scoreboard splits into two: P1 score + P2 score
+- GAME OVER screen shows the winner.
 
 ---
 
