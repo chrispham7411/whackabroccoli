@@ -54,8 +54,8 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 | v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ✅ |
 | v5 | "Hand slam, YUCK!/YUM…NO! text, splat sound." | ✅ |
 | v6 | "30-second timer + 'GAME OVER' screen + Play Again." | ✅ |
-| v7 | "Make it two players: A/S/D/F vs J/K/L/;." | ⏳ |
-| v8 | "When broccoli explodes, the bits fall down and pile up at the bottom." | |
+| v7 | "Two players: A/S/D/F vs J/K/L/;, middle = shared bonus." | ✅ |
+| v8 | "When broccoli explodes, the bits fall down and pile up at the bottom." | ⏳ |
 | v9 | Kids' wishlist (see below) | |
 
 ---
@@ -165,13 +165,36 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
   — lots of little timers and listeners doing their own thing at once.
 - **Kids' reaction:** *(fill in!)*
 
-### v7 — ⏳ next
-- Two players on one keyboard.
-- Player 1: **A / S / D / F** → owns the 4 left-side holes
-- Player 2: **J / K / L / ;** → owns the 4 right-side holes
-- Middle hole = shared bonus (either player can hit it)
-- Scoreboard splits into two: P1 score + P2 score
-- GAME OVER screen shows the winner.
+### v7 — shipped (two-player chaos)
+- Each hole now has an owner and a label letter color-coded by player:
+  ```
+  [A blue ] [F blue ] [K red  ]
+  [S blue ] [★ gold ] [L red  ]
+  [D blue ] [J red  ] [; red  ]
+  ```
+- **Player 1 (blue, left):** A / S / D / F
+- **Player 2 (red, right):** J / K / L / ;
+- **Center hole (★):** shared bonus. No keyboard key — has to be hit with
+  the mouse. Whoever clicks scores +1, BUT both players get the point
+  (kids will fight to be the one to click it… or won't realize it's shared
+  until they count the score).
+- HUD now shows **three pills**: P1 score (blue), TIME, P2 score (red).
+- GAME OVER screen splits the score: P1 box vs P2 box, with a winner
+  banner ("PLAYER 1 WINS!", "PLAYER 2 WINS!", or "IT'S A TIE!").
+- Old Q/W/E and Z/X/C single-player keys are **gone** — this is a real
+  two-player game now.
+- Code-lesson moment: we added a `HOLE_OWNERS` array and a `KEY_TO_PLAYER`
+  map. Every whack now has to ask "**who** whacked this?" before deciding
+  whose score to bump. Same logic everywhere — just one new question.
+- **Kids' reaction:** *(fill in!)*
+
+### v8 — ⏳ next (the big finale)
+- When a broccoli is whacked, it explodes into 5–10 little green bits.
+- Bits **fall with gravity** (real physics-like motion: position, velocity,
+  acceleration).
+- They land at the bottom of the screen and **pile up** — bits land on top
+  of other bits, eventually filling the screen.
+- This is the "wow" moment. It's also the most code in any single step.
 
 ---
 

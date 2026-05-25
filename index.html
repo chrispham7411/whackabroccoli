@@ -61,12 +61,24 @@
     .pill {
       background: #fff8e7;
       color: #4a2c12;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: bold;
-      padding: 8px 24px;
+      padding: 8px 22px;
       border-radius: 999px;
       box-shadow: 0 4px 0 #4a2c12;
       letter-spacing: 1px;
+    }
+
+    /* Player-colored score pills */
+    .pill.p1 {
+      background: #c4eef3;
+      color: #064a55;
+      box-shadow: 0 4px 0 #064a55;
+    }
+    .pill.p2 {
+      background: #ffd7d7;
+      color: #8a1010;
+      box-shadow: 0 4px 0 #8a1010;
     }
 
     /* Last 5 seconds: pulse the time pill red so kids feel the pressure */
@@ -98,18 +110,27 @@
         inset 0 10px 15px rgba(255,255,255,0.05),
         0 6px 0 rgba(0,0,0,0.4);
       position: relative;
-      /* overflow visible so floating +1 can escape upward */
       overflow: visible;
     }
 
-    /* A clipping mask: only the inside-the-hole part of the creature is hidden */
-    .hole::after {
-      content: '';
+    /* Key-letter label sitting at the bottom of each hole, color-coded by player */
+    .hole::before {
+      content: attr(data-key);
       position: absolute;
-      inset: 0;
-      border-radius: 50%;
+      bottom: 6px;
+      left: 0; right: 0;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.45);
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
       pointer-events: none;
+      z-index: 0;
     }
+    .hole[data-owner="P1"]::before  { color: #6cd7e2; }
+    .hole[data-owner="P2"]::before  { color: #ff8a8a; }
+    .hole[data-owner="BOTH"]::before{ color: #ffd84d; font-size: 22px; }
 
     /* The thing that pops out of a hole (broccoli on a fork, for now) */
     .creature {
@@ -287,23 +308,61 @@
 
     .overlay-card h2 {
       font-size: 56px;
-      margin: 0 0 16px;
+      margin: 0 0 6px;
       letter-spacing: 3px;
     }
 
-    .overlay-card .label {
-      font-size: 18px;
-      margin: 0;
+    .overlay-card .winner {
+      font-size: 28px;
+      font-weight: 900;
+      margin: 0 0 20px;
       letter-spacing: 2px;
-      color: #7a5230;
+      color: #d4691f;
+    }
+    .overlay-card .winner.tie { color: #7a5230; }
+
+    .overlay-card .final-scores {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 0 0 28px;
     }
 
+    .overlay-card .final-score-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 24px;
+      border-radius: 16px;
+      min-width: 110px;
+    }
+    .overlay-card .final-score-block.p1 {
+      background: #c4eef3;
+      color: #064a55;
+    }
+    .overlay-card .final-score-block.p2 {
+      background: #ffd7d7;
+      color: #8a1010;
+    }
+
+    .overlay-card .final-score-block .label {
+      font-size: 14px;
+      letter-spacing: 2px;
+      font-weight: 700;
+      opacity: 0.85;
+    }
     .overlay-card .final-score {
-      font-size: 90px;
+      font-size: 56px;
       font-weight: 900;
       line-height: 1;
-      margin: 6px 0 24px;
-      color: #d4691f;
+    }
+
+    .overlay-card .vs {
+      font-size: 22px;
+      font-weight: 900;
+      color: #7a5230;
+      letter-spacing: 2px;
     }
 
     .overlay-card button {
@@ -330,27 +389,38 @@
 <body>
   <h1>WHACK-A-BROCCOLI</h1>
   <div id="hud">
-    <div class="pill">SCORE: <span id="score">0</span></div>
+    <div class="pill p1">P1: <span id="scoreP1">0</span></div>
     <div class="pill" id="timePill">TIME: <span id="time">30</span></div>
+    <div class="pill p2">P2: <span id="scoreP2">0</span></div>
   </div>
 
   <div class="grid" id="grid">
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
-    <div class="hole"></div>
+    <div class="hole" data-key="A" data-owner="P1"></div>
+    <div class="hole" data-key="F" data-owner="P1"></div>
+    <div class="hole" data-key="K" data-owner="P2"></div>
+    <div class="hole" data-key="S" data-owner="P1"></div>
+    <div class="hole" data-key="★" data-owner="BOTH"></div>
+    <div class="hole" data-key="L" data-owner="P2"></div>
+    <div class="hole" data-key="D" data-owner="P1"></div>
+    <div class="hole" data-key="J" data-owner="P2"></div>
+    <div class="hole" data-key=";" data-owner="P2"></div>
   </div>
 
   <div class="overlay" id="overlay">
     <div class="overlay-card">
       <h2>GAME OVER</h2>
-      <p class="label">FINAL SCORE</p>
-      <div class="final-score" id="finalScore">0</div>
+      <p class="winner" id="winner">PLAYER 1 WINS!</p>
+      <div class="final-scores">
+        <div class="final-score-block p1">
+          <span class="label">PLAYER 1</span>
+          <span class="final-score" id="finalP1">0</span>
+        </div>
+        <div class="vs">vs</div>
+        <div class="final-score-block p2">
+          <span class="label">PLAYER 2</span>
+          <span class="final-score" id="finalP2">0</span>
+        </div>
+      </div>
       <button id="playAgain">PLAY AGAIN</button>
     </div>
   </div>
@@ -362,32 +432,57 @@
     const GAME_LENGTH_SEC = 30;    // round length
 
     const holes = document.querySelectorAll('.hole');
-    const scoreEl = document.getElementById('score');
+    const scoreP1El = document.getElementById('scoreP1');
+    const scoreP2El = document.getElementById('scoreP2');
     const timeEl  = document.getElementById('time');
     const timePill = document.getElementById('timePill');
     const overlay = document.getElementById('overlay');
-    const finalScoreEl = document.getElementById('finalScore');
+    const finalP1El = document.getElementById('finalP1');
+    const finalP2El = document.getElementById('finalP2');
+    const winnerEl = document.getElementById('winner');
     const playAgainBtn = document.getElementById('playAgain');
 
-    let score = 0;
+    let scoreP1 = 0;
+    let scoreP2 = 0;
     let timeLeft = GAME_LENGTH_SEC;
     let gameOver = false;
     let spawnTimer = null;
     let countdownTimer = null;
 
-    // Keyboard mapping: each key whacks the hole at the same spot on the grid.
-    //   Q W E
-    //   A S D
-    //   Z X C
+    // Grid layout (hole index → owning player):
+    //   [0:A P1] [1:F P1] [2:K P2]
+    //   [3:S P1] [4:★ BOTH] [5:L P2]
+    //   [6:D P1] [7:J P2] [8:; P2]
+    const HOLE_OWNERS = [
+      'P1', 'P1', 'P2',
+      'P1', 'BOTH', 'P2',
+      'P1', 'P2', 'P2',
+    ];
+
+    // Which hole does each key whack? Center (★) has no keyboard shortcut —
+    // it's the mouse-only shared bonus.
     const KEY_TO_HOLE = {
-      q: 0, w: 1, e: 2,
-      a: 3, s: 4, d: 5,
-      z: 6, x: 7, c: 8,
+      a: 0, f: 1, k: 2,
+      s: 3,        l: 5,
+      d: 6, j: 7, ';': 8,
     };
 
-    function bumpScore(by) {
-      score += by;
-      scoreEl.textContent = score;
+    // Which player owns each key? (Used so a keypress scores for the right side.)
+    const KEY_TO_PLAYER = {
+      a: 'P1', s: 'P1', d: 'P1', f: 'P1',
+      j: 'P2', k: 'P2', l: 'P2', ';': 'P2',
+    };
+
+    function bumpScore(player, by) {
+      // 'BOTH' awards to both players (center hole = shared bonus).
+      if (player === 'P1' || player === 'BOTH') {
+        scoreP1 += by;
+        scoreP1El.textContent = scoreP1;
+      }
+      if (player === 'P2' || player === 'BOTH') {
+        scoreP2 += by;
+        scoreP2El.textContent = scoreP2;
+      }
     }
 
     function floatScorePop(hole, text, isMinus) {
@@ -490,18 +585,18 @@
       }, 200);
     }
 
-    function whack(hole, creature) {
+    function whack(hole, creature, player) {
       if (gameOver) return;
       if (creature._gone) return;
       handSlam(hole);
       if (creature.dataset.kind === 'candy') {
-        bumpScore(-1);
+        bumpScore(player, -1);
         floatScorePop(hole, '-1', true);
         textPop(hole, 'YUM...NO!', 'yum');
         boom(hole);
         playSplat(true);
       } else {
-        bumpScore(1);
+        bumpScore(player, 1);
         floatScorePop(hole, '+1', false);
         textPop(hole, 'YUCK!', 'yuck');
         playSplat(false);
@@ -524,7 +619,9 @@
         : '<span class="head">🥦</span><span class="stick">🍴</span>';
       hole._creature = creature;
 
-      creature.addEventListener('click', () => whack(hole, creature));
+      // Mouse click: the hole's owner gets the point (center hole = both players).
+      const ownerOnClick = HOLE_OWNERS[[...holes].indexOf(hole)];
+      creature.addEventListener('click', () => whack(hole, creature, ownerOnClick));
 
       hole.appendChild(creature);
 
@@ -543,13 +640,14 @@
     document.addEventListener('keydown', (e) => {
       if (gameOver) return;
       if (e.repeat) return;
-      const idx = KEY_TO_HOLE[e.key.toLowerCase()];
+      const key = e.key.toLowerCase();
+      const idx = KEY_TO_HOLE[key];
       if (idx === undefined) return;
       const hole = holes[idx];
       const creature = hole._creature;
       if (!creature) return;
       delete hole._creature;
-      whack(hole, creature);
+      whack(hole, creature, KEY_TO_PLAYER[key]);
     });
 
     function clearAllHoles() {
@@ -576,14 +674,25 @@
       clearInterval(countdownTimer);
       spawnTimer = null;
       countdownTimer = null;
-      finalScoreEl.textContent = score;
+      finalP1El.textContent = scoreP1;
+      finalP2El.textContent = scoreP2;
+      winnerEl.classList.remove('tie');
+      if (scoreP1 > scoreP2) {
+        winnerEl.textContent = 'PLAYER 1 WINS!';
+      } else if (scoreP2 > scoreP1) {
+        winnerEl.textContent = 'PLAYER 2 WINS!';
+      } else {
+        winnerEl.textContent = "IT'S A TIE!";
+        winnerEl.classList.add('tie');
+      }
       overlay.classList.add('show');
     }
 
     function startGame() {
-      // Reset state
-      score = 0;
-      scoreEl.textContent = '0';
+      scoreP1 = 0;
+      scoreP2 = 0;
+      scoreP1El.textContent = '0';
+      scoreP2El.textContent = '0';
       timeLeft = GAME_LENGTH_SEC;
       timeEl.textContent = timeLeft;
       timePill.classList.remove('urgent');
@@ -591,7 +700,7 @@
       overlay.classList.remove('show');
       clearAllHoles();
 
-      // Start the two heartbeats: one spawns things, one counts down.
+      // Two heartbeats: one spawns things, one counts down.
       spawnTimer = setInterval(popRandomThing, POP_EVERY_MS);
       countdownTimer = setInterval(tick, 1000);
     }
