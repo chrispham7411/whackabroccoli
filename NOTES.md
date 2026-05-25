@@ -48,8 +48,8 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 | Step | The kids' prompt (in their own words) | Status |
 |------|----------------------------------------|--------|
 | v1 | "Make a 3×3 grid of holes on a kitchen-table background." | ✅ |
-| v2 | "Make a broccoli on a fork pop up in a random hole every second." | ⏳ |
-| v3 | "When I click a broccoli, it disappears and a +1 floats up." | |
+| v2 | "Make a broccoli on a fork pop up in a random hole every second." | ✅ |
+| v3 | "When I click a broccoli, it disappears and a +1 floats up." | ⏳ |
 | v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | |
 | v5 | "Add a hand cursor that slams down, a YUCK! popup, and a splat sound." | |
 | v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | |
@@ -100,10 +100,19 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
 - Pure HTML + CSS, no JavaScript.
 - **Kids' reaction:** *(fill in after they see it!)*
 
-### v2 — ⏳ next
-- Broccoli appears in random holes.
-- Disappears on its own after ~1 second if not whacked.
-- Still emoji 🥦 — we swap to real images later.
+### v2 — shipped
+- A broccoli-on-fork pops up in a random empty hole every ~0.9 seconds.
+- Stays up for ~1.1 seconds, then drops back down and disappears.
+- Made from emojis stacked together: 🥦 on top, 🍴 underneath rotated upside
+  down to look like the broccoli is on a stick. (Hacky! We swap to a real
+  image on art day.)
+- First JavaScript in the project — `setInterval` keeps the game going.
+- **Kids' reaction:** *(fill in after they see it!)*
+
+### v3 — ⏳ next
+- Click a broccoli → it disappears, a "+1" floats up from the hole, score
+  ticks up.
+- This is the first time clicking actually *does* something.
 
 ---
 

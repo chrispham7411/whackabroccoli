@@ -12,7 +12,7 @@
       overflow: hidden;
     }
 
-    /* Kitchen-table background — wood grain made with CSS gradients */
+    /* Kitchen-table background */
     body {
       background-color: #8b5a2b;
       background-image:
@@ -63,16 +63,47 @@
         inset 0 -10px 20px rgba(0,0,0,0.6),
         inset 0 10px 15px rgba(255,255,255,0.05),
         0 6px 0 rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* The thing that pops out of a hole (broccoli on a fork, for now) */
+    .creature {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -10px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      transform: translateY(100%);
+      transition: transform 0.18s ease-out;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .creature.up {
+      transform: translateY(-10%);
+    }
+
+    .creature .head {
+      font-size: 80px;
+      line-height: 1;
+    }
+
+    /* The fork: rotated so the handle points down (the "stick" coming out of the hole) */
+    .creature .stick {
+      font-size: 50px;
+      line-height: 1;
+      margin-top: -15px;
+      transform: rotate(180deg);
     }
   </style>
 </head>
 <body>
   <h1>WHACK-A-BROCCOLI</h1>
 
-  <div class="grid">
+  <div class="grid" id="grid">
     <div class="hole"></div>
     <div class="hole"></div>
     <div class="hole"></div>
@@ -83,5 +114,43 @@
     <div class="hole"></div>
     <div class="hole"></div>
   </div>
+
+  <script>
+    // How fast new broccoli pop up, and how long they stay before going back down.
+    const POP_EVERY_MS = 900;
+    const STAY_UP_MS  = 1100;
+
+    const holes = document.querySelectorAll('.hole');
+
+    function popRandomBroccoli() {
+      // Pick a hole that isn't already busy.
+      const free = [...holes].filter(h => !h.dataset.busy);
+      if (free.length === 0) return;
+      const hole = free[Math.floor(Math.random() * free.length)];
+      hole.dataset.busy = '1';
+
+      // Build the broccoli-on-fork: 🥦 stacked on top of an upside-down 🍴.
+      const creature = document.createElement('div');
+      creature.className = 'creature';
+      creature.innerHTML = '<span class="head">🥦</span><span class="stick">🍴</span>';
+      hole.appendChild(creature);
+
+      // Wait one frame so the browser sees the start position, then trigger the rise.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => creature.classList.add('up'));
+      });
+
+      // Drop it back down after STAY_UP_MS, then remove it.
+      setTimeout(() => {
+        creature.classList.remove('up');
+        setTimeout(() => {
+          creature.remove();
+          delete hole.dataset.busy;
+        }, 200);
+      }, STAY_UP_MS);
+    }
+
+    setInterval(popRandomBroccoli, POP_EVERY_MS);
+  </script>
 </body>
 </html>
