@@ -384,6 +384,25 @@
       transform: translateY(3px);
       box-shadow: 0 2px 0 #b85e1a;
     }
+
+    /* Studio brand watermark, bottom-center */
+    #brand {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow:
+        1px 1px 0 rgba(0,0,0,0.6),
+        0 0 12px rgba(0,0,0,0.3);
+      pointer-events: none;
+      opacity: 0.92;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
@@ -405,6 +424,8 @@
     <div class="hole" data-key="J" data-owner="P2"></div>
     <div class="hole" data-key=";" data-owner="P2"></div>
   </div>
+
+  <div id="brand">SuperPham Video Game Co.</div>
 
   <div class="overlay" id="overlay">
     <div class="overlay-card">
