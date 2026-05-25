@@ -118,6 +118,17 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
   the same time and double-free the hole — guarded with a `_gone` flag.
 - **Kids' reaction:** *(fill in!)*
 
+### v3.5 — shipped (the "AI only does what you ask" lesson)
+- Kids tried the keyboard. Nothing happened. We talked about why: nobody
+  ever *asked* the AI for keyboard support — only mouse clicks. The plan
+  in NOTES isn't the prompt!
+- Then we added keyboard whacking. Keys map spatially to the grid:
+  - **Q W E** → top row
+  - **A S D** → middle row
+  - **Z X C** → bottom row
+- Refactored the whack action into a `whack()` function so both click and
+  keydown share the same code.
+
 ### v4 — ⏳ next
 - Sometimes a candy pops up instead of a broccoli (~1 in 4?).
 - Whack the candy = bomb explodes + score goes down by 1.

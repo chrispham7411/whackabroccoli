@@ -185,6 +185,16 @@
     const scoreEl = document.getElementById('score');
     let score = 0;
 
+    // Keyboard mapping: each key whacks the hole at the same spot on the grid.
+    //   Q W E
+    //   A S D
+    //   Z X C
+    const KEY_TO_HOLE = {
+      q: 0, w: 1, e: 2,
+      a: 3, s: 4, d: 5,
+      z: 6, x: 7, c: 8,
+    };
+
     function bumpScore(by) {
       score += by;
       scoreEl.textContent = score;
@@ -211,6 +221,13 @@
       }, 200);
     }
 
+    function whack(hole, creature) {
+      if (creature._gone) return;
+      bumpScore(1);
+      floatPlusOne(hole);
+      removeCreature(hole, creature);
+    }
+
     function popRandomBroccoli() {
       const free = [...holes].filter(h => !h.dataset.busy);
       if (free.length === 0) return;
@@ -220,13 +237,9 @@
       const creature = document.createElement('div');
       creature.className = 'creature';
       creature.innerHTML = '<span class="head">🥦</span><span class="stick">🍴</span>';
+      hole._creature = creature;
 
-      creature.addEventListener('click', () => {
-        if (creature._gone) return;
-        bumpScore(1);
-        floatPlusOne(hole);
-        removeCreature(hole, creature);
-      });
+      creature.addEventListener('click', () => whack(hole, creature));
 
       hole.appendChild(creature);
 
@@ -235,8 +248,23 @@
       });
 
       // Auto-hide if it's not whacked in time.
-      creature._hideTimer = setTimeout(() => removeCreature(hole, creature), STAY_UP_MS);
+      creature._hideTimer = setTimeout(() => {
+        delete hole._creature;
+        removeCreature(hole, creature);
+      }, STAY_UP_MS);
     }
+
+    // Keyboard: when a mapped key is pressed, whack the broccoli in that hole (if any).
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      const idx = KEY_TO_HOLE[e.key.toLowerCase()];
+      if (idx === undefined) return;
+      const hole = holes[idx];
+      const creature = hole._creature;
+      if (!creature) return;
+      delete hole._creature;
+      whack(hole, creature);
+    });
 
     setInterval(popRandomBroccoli, POP_EVERY_MS);
   </script>
