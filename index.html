@@ -127,7 +127,7 @@
       pointer-events: none;
     }
 
-    /* Floating +1 that rises out of the hole when a broccoli is whacked */
+    /* Floating +1 / -1 that rises out of the hole when something is whacked */
     .score-pop {
       position: absolute;
       left: 50%;
@@ -145,6 +145,11 @@
       animation: floatUp 800ms ease-out forwards;
     }
 
+    /* Red variant when you whack a candy (penalty) */
+    .score-pop.minus {
+      color: #ff5151;
+    }
+
     @keyframes floatUp {
       from {
         transform: translate(-50%, 0) scale(0.6);
@@ -158,6 +163,24 @@
         transform: translate(-50%, -120px) scale(1);
         opacity: 0;
       }
+    }
+
+    /* Bomb explosion that briefly fills the hole when you whack a candy */
+    .boom {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 110px;
+      pointer-events: none;
+      animation: boomPop 500ms ease-out forwards;
+    }
+
+    @keyframes boomPop {
+      from { transform: scale(0.2); opacity: 0; }
+      30%  { transform: scale(1.3); opacity: 1; }
+      to   { transform: scale(1.6); opacity: 0; }
     }
   </style>
 </head>
@@ -180,6 +203,7 @@
   <script>
     const POP_EVERY_MS = 900;
     const STAY_UP_MS  = 1100;
+    const CANDY_CHANCE = 0.25; // ~1 in 4 pops is candy — don't whack it!
 
     const holes = document.querySelectorAll('.hole');
     const scoreEl = document.getElementById('score');
@@ -200,13 +224,20 @@
       scoreEl.textContent = score;
     }
 
-    function floatPlusOne(hole) {
+    function floatScorePop(hole, text, isMinus) {
       const pop = document.createElement('div');
-      pop.className = 'score-pop';
-      pop.textContent = '+1';
+      pop.className = 'score-pop' + (isMinus ? ' minus' : '');
+      pop.textContent = text;
       hole.appendChild(pop);
-      // Remove the +1 after its animation finishes so the DOM stays clean.
       setTimeout(() => pop.remove(), 800);
+    }
+
+    function boom(hole) {
+      const b = document.createElement('div');
+      b.className = 'boom';
+      b.textContent = '💥';
+      hole.appendChild(b);
+      setTimeout(() => b.remove(), 500);
     }
 
     function removeCreature(hole, creature) {
@@ -223,20 +254,30 @@
 
     function whack(hole, creature) {
       if (creature._gone) return;
-      bumpScore(1);
-      floatPlusOne(hole);
+      if (creature.dataset.kind === 'candy') {
+        bumpScore(-1);
+        floatScorePop(hole, '-1', true);
+        boom(hole);
+      } else {
+        bumpScore(1);
+        floatScorePop(hole, '+1', false);
+      }
       removeCreature(hole, creature);
     }
 
-    function popRandomBroccoli() {
+    function popRandomThing() {
       const free = [...holes].filter(h => !h.dataset.busy);
       if (free.length === 0) return;
       const hole = free[Math.floor(Math.random() * free.length)];
       hole.dataset.busy = '1';
 
+      const isCandy = Math.random() < CANDY_CHANCE;
       const creature = document.createElement('div');
       creature.className = 'creature';
-      creature.innerHTML = '<span class="head">🥦</span><span class="stick">🍴</span>';
+      creature.dataset.kind = isCandy ? 'candy' : 'broccoli';
+      creature.innerHTML = isCandy
+        ? '<span class="head">🍬</span>'
+        : '<span class="head">🥦</span><span class="stick">🍴</span>';
       hole._creature = creature;
 
       creature.addEventListener('click', () => whack(hole, creature));
@@ -266,7 +307,7 @@
       whack(hole, creature);
     });
 
-    setInterval(popRandomBroccoli, POP_EVERY_MS);
+    setInterval(popRandomThing, POP_EVERY_MS);
   </script>
 </body>
 </html>

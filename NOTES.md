@@ -50,8 +50,9 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 | v1 | "Make a 3×3 grid of holes on a kitchen-table background." | ✅ |
 | v2 | "Make a broccoli on a fork pop up in a random hole every second." | ✅ |
 | v3 | "When I click a broccoli, it disappears and a +1 floats up." | ✅ |
-| v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ⏳ |
-| v5 | "Add a hand cursor that slams down, a YUCK! popup, and a splat sound." | |
+| v3.5 | "It works with mouse but not with keyboard." (Q/W/E A/S/D Z/X/C) | ✅ |
+| v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ✅ |
+| v5 | "Add a hand cursor that slams down, a YUCK! popup, and a splat sound." | ⏳ |
 | v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | |
 | v7 | "Make it two players: A/S/D/F vs J/K/L/;." | |
 | v8 | "When broccoli explodes, the bits fall down and pile up at the bottom." | |
@@ -129,11 +130,21 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
 - Refactored the whack action into a `whack()` function so both click and
   keydown share the same code.
 
-### v4 — ⏳ next
-- Sometimes a candy pops up instead of a broccoli (~1 in 4?).
-- Whack the candy = bomb explodes + score goes down by 1.
-- First time the kids see *consequences* — not everything that pops up is
-  good.
+### v4 — shipped
+- 25% chance any given pop is a candy 🍬 instead of broccoli.
+- Whack a candy → red "−1" floats up, a 💥 boom briefly fills the hole,
+  score drops by 1.
+- Score can now go negative.
+- Code change worth noticing: the `whack()` function now *branches* on what
+  kind of thing was whacked. Same function, different outcomes.
+- **Kids' reaction:** *(fill in!)*
+
+### v5 — ⏳ next
+- Hand cursor that slams down on whack.
+- "YUCK!" text pop.
+- Splat sound effect.
+- This is the "polish" round — the game already works, now we make it
+  *feel* good.
 
 ---
 
