@@ -144,6 +144,13 @@
       transform: translateY(100%);
       transition: transform 0.18s ease-out;
       user-select: none;
+      /* No mouse clicks on normal creatures — keyboard only for P1 / P2 zones. */
+      pointer-events: none;
+    }
+
+    /* Center ★ bonus hole IS clickable (it has no keyboard key). */
+    .creature.bonus {
+      pointer-events: auto;
       cursor: pointer;
     }
 
@@ -640,9 +647,13 @@
         : '<span class="head">🥦</span><span class="stick">🍴</span>';
       hole._creature = creature;
 
-      // Mouse click: the hole's owner gets the point (center hole = both players).
-      const ownerOnClick = HOLE_OWNERS[[...holes].indexOf(hole)];
-      creature.addEventListener('click', () => whack(hole, creature, ownerOnClick));
+      // Mouse only whacks the center ★ bonus (no keyboard key for it).
+      // P1 and P2 zones are keyboard-only.
+      const holeIndex = [...holes].indexOf(hole);
+      if (HOLE_OWNERS[holeIndex] === 'BOTH') {
+        creature.classList.add('bonus');
+        creature.addEventListener('click', () => whack(hole, creature, 'BOTH'));
+      }
 
       hole.appendChild(creature);
 
