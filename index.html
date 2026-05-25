@@ -113,24 +113,31 @@
       overflow: visible;
     }
 
-    /* Key-letter label sitting at the bottom of each hole, color-coded by player */
-    .hole::before {
-      content: attr(data-key);
+    /* Each hole now shows BOTH players' keys, side-by-side:
+       blue letter on the left (P1's key) and red on the right (P2's key). */
+    .hole::before,
+    .hole::after {
       position: absolute;
-      bottom: 6px;
-      left: 0; right: 0;
-      text-align: center;
+      bottom: 8px;
       font-size: 18px;
       font-weight: 900;
       letter-spacing: 1px;
-      color: rgba(255,255,255,0.45);
-      text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
       pointer-events: none;
       z-index: 0;
     }
-    .hole[data-owner="P1"]::before  { color: #6cd7e2; }
-    .hole[data-owner="P2"]::before  { color: #ff8a8a; }
-    .hole[data-owner="BOTH"]::before{ color: #ffd84d; font-size: 22px; }
+    .hole::before {
+      content: attr(data-p1-key);
+      left: 30%;
+      transform: translateX(-50%);
+      color: #6cd7e2;
+    }
+    .hole::after {
+      content: attr(data-p2-key);
+      left: 70%;
+      transform: translateX(-50%);
+      color: #ff8a8a;
+    }
 
     /* The thing that pops out of a hole (broccoli on a fork, for now) */
     .creature {
@@ -144,14 +151,8 @@
       transform: translateY(100%);
       transition: transform 0.18s ease-out;
       user-select: none;
-      /* No mouse clicks on normal creatures — keyboard only for P1 / P2 zones. */
+      /* Keyboard-only game now — mouse can't whack creatures. */
       pointer-events: none;
-    }
-
-    /* Center ★ bonus hole IS clickable (it has no keyboard key). */
-    .creature.bonus {
-      pointer-events: auto;
-      cursor: pointer;
     }
 
     .creature.up {
@@ -228,18 +229,25 @@
       to   { transform: scale(1.6); opacity: 0; }
     }
 
-    /* Cartoon hand slamming down onto the hole when you whack */
+    /* Cartoon hand slamming down onto the hole when you whack.
+       SVG-based so we can color it per-player (blue for P1, red for P2). */
     .hand-slam {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 120px;
       pointer-events: none;
       z-index: 5;
       animation: handSlam 320ms ease-out forwards;
     }
+    .hand-slam svg {
+      width: 130px;
+      height: 130px;
+      filter: drop-shadow(0 4px 0 rgba(0,0,0,0.5));
+    }
+    .hand-slam.p1 { color: #2196f3; }
+    .hand-slam.p2 { color: #e53935; }
 
     @keyframes handSlam {
       from { transform: translateY(-120px) rotate(-15deg) scale(1.8); opacity: 0; }
@@ -421,15 +429,15 @@
   </div>
 
   <div class="grid" id="grid">
-    <div class="hole" data-key="A" data-owner="P1"></div>
-    <div class="hole" data-key="F" data-owner="P1"></div>
-    <div class="hole" data-key="K" data-owner="P2"></div>
-    <div class="hole" data-key="S" data-owner="P1"></div>
-    <div class="hole" data-key="★" data-owner="BOTH"></div>
-    <div class="hole" data-key="L" data-owner="P2"></div>
-    <div class="hole" data-key="D" data-owner="P1"></div>
-    <div class="hole" data-key="J" data-owner="P2"></div>
-    <div class="hole" data-key=";" data-owner="P2"></div>
+    <div class="hole" data-p1-key="Q" data-p2-key="U"></div>
+    <div class="hole" data-p1-key="W" data-p2-key="I"></div>
+    <div class="hole" data-p1-key="E" data-p2-key="O"></div>
+    <div class="hole" data-p1-key="A" data-p2-key="J"></div>
+    <div class="hole" data-p1-key="S" data-p2-key="K"></div>
+    <div class="hole" data-p1-key="D" data-p2-key="L"></div>
+    <div class="hole" data-p1-key="Z" data-p2-key="M"></div>
+    <div class="hole" data-p1-key="X" data-p2-key=","></div>
+    <div class="hole" data-p1-key="C" data-p2-key="."></div>
   </div>
 
   <div id="brand">SuperPham Video Game Co.</div>
@@ -477,37 +485,37 @@
     let spawnTimer = null;
     let countdownTimer = null;
 
-    // Grid layout (hole index → owning player):
-    //   [0:A P1] [1:F P1] [2:K P2]
-    //   [3:S P1] [4:★ BOTH] [5:L P2]
-    //   [6:D P1] [7:J P2] [8:; P2]
-    const HOLE_OWNERS = [
-      'P1', 'P1', 'P2',
-      'P1', 'BOTH', 'P2',
-      'P1', 'P2', 'P2',
-    ];
-
-    // Which hole does each key whack? Center (★) has no keyboard shortcut —
-    // it's the mouse-only shared bonus.
+    // Both players cover the whole 3×3 grid. Either can hit ANY hole;
+    // whoever presses first claims the broccoli.
+    //   P1 (left hand, blue):     P2 (right hand, red):
+    //     Q W E                     U I O
+    //     A S D                     J K L
+    //     Z X C                     M , .
     const KEY_TO_HOLE = {
-      a: 0, f: 1, k: 2,
-      s: 3,        l: 5,
-      d: 6, j: 7, ';': 8,
+      // P1 keys
+      q: 0, w: 1, e: 2,
+      a: 3, s: 4, d: 5,
+      z: 6, x: 7, c: 8,
+      // P2 keys (same grid positions, right side of the keyboard)
+      u: 0, i: 1, o: 2,
+      j: 3, k: 4, l: 5,
+      m: 6, ',': 7, '.': 8,
     };
 
-    // Which player owns each key? (Used so a keypress scores for the right side.)
     const KEY_TO_PLAYER = {
-      a: 'P1', s: 'P1', d: 'P1', f: 'P1',
-      j: 'P2', k: 'P2', l: 'P2', ';': 'P2',
+      q: 'P1', w: 'P1', e: 'P1',
+      a: 'P1', s: 'P1', d: 'P1',
+      z: 'P1', x: 'P1', c: 'P1',
+      u: 'P2', i: 'P2', o: 'P2',
+      j: 'P2', k: 'P2', l: 'P2',
+      m: 'P2', ',': 'P2', '.': 'P2',
     };
 
     function bumpScore(player, by) {
-      // 'BOTH' awards to both players (center hole = shared bonus).
-      if (player === 'P1' || player === 'BOTH') {
+      if (player === 'P1') {
         scoreP1 += by;
         scoreP1El.textContent = scoreP1;
-      }
-      if (player === 'P2' || player === 'BOTH') {
+      } else if (player === 'P2') {
         scoreP2 += by;
         scoreP2El.textContent = scoreP2;
       }
@@ -529,10 +537,23 @@
       setTimeout(() => b.remove(), 500);
     }
 
-    function handSlam(hole) {
+    // Cartoon hand drawn as SVG paths so we can recolor it per-player.
+    const HAND_SVG = `
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g fill="currentColor" stroke="rgba(0,0,0,0.55)" stroke-width="3" stroke-linejoin="round">
+          <path d="M 22 58 Q 12 52 12 42 Q 12 34 22 34 Q 32 34 34 44 L 34 60 Z" />
+          <rect x="28" y="42" width="52" height="46" rx="11" />
+          <rect x="32" y="14" width="11" height="34" rx="5.5" />
+          <rect x="46" y="6"  width="11" height="42" rx="5.5" />
+          <rect x="60" y="10" width="11" height="38" rx="5.5" />
+          <rect x="74" y="20" width="10" height="28" rx="5" />
+        </g>
+      </svg>`;
+
+    function handSlam(hole, player) {
       const h = document.createElement('div');
-      h.className = 'hand-slam';
-      h.textContent = '✋';
+      h.className = 'hand-slam ' + (player === 'P1' ? 'p1' : 'p2');
+      h.innerHTML = HAND_SVG;
       hole.appendChild(h);
       setTimeout(() => h.remove(), 320);
     }
@@ -616,7 +637,7 @@
     function whack(hole, creature, player) {
       if (gameOver) return;
       if (creature._gone) return;
-      handSlam(hole);
+      handSlam(hole, player);
       if (creature.dataset.kind === 'candy') {
         bumpScore(player, -1);
         floatScorePop(hole, '-1', true);
@@ -646,14 +667,6 @@
         ? '<span class="head">🍬</span>'
         : '<span class="head">🥦</span><span class="stick">🍴</span>';
       hole._creature = creature;
-
-      // Mouse only whacks the center ★ bonus (no keyboard key for it).
-      // P1 and P2 zones are keyboard-only.
-      const holeIndex = [...holes].indexOf(hole);
-      if (HOLE_OWNERS[holeIndex] === 'BOTH') {
-        creature.classList.add('bonus');
-        creature.addEventListener('click', () => whack(hole, creature, 'BOTH'));
-      }
 
       hole.appendChild(creature);
 

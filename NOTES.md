@@ -166,26 +166,29 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
 - **Kids' reaction:** *(fill in!)*
 
 ### v7 — shipped (two-player chaos)
-- Each hole now has an owner and a label letter color-coded by player:
-  ```
-  [A blue ] [F blue ] [K red  ]
-  [S blue ] [★ gold ] [L red  ]
-  [D blue ] [J red  ] [; red  ]
-  ```
-- **Player 1 (blue, left):** A / S / D / F
-- **Player 2 (red, right):** J / K / L / ;
-- **Center hole (★):** shared bonus. No keyboard key — has to be hit with
-  the mouse. Whoever clicks scores +1, BUT both players get the point
-  (kids will fight to be the one to click it… or won't realize it's shared
-  until they count the score).
-- HUD now shows **three pills**: P1 score (blue), TIME, P2 score (red).
+- HUD shows **three pills**: P1 score (blue), TIME, P2 score (red).
 - GAME OVER screen splits the score: P1 box vs P2 box, with a winner
   banner ("PLAYER 1 WINS!", "PLAYER 2 WINS!", or "IT'S A TIE!").
-- Old Q/W/E and Z/X/C single-player keys are **gone** — this is a real
-  two-player game now.
-- Code-lesson moment: we added a `HOLE_OWNERS` array and a `KEY_TO_PLAYER`
-  map. Every whack now has to ask "**who** whacked this?" before deciding
-  whose score to bump. Same logic everywhere — just one new question.
+- First pass: each player owned 4 holes, with center as shared mouse-only
+  bonus. Kids found that confusing.
+- **Final rule (v7.x): EITHER player can hit ANY hole — first-press wins.**
+  Each hole shows both keys, color-coded:
+  ```
+  [Q U] [W I] [E O]
+  [A J] [S K] [D L]
+  [Z M] [X ,] [C .]
+   blue  red       ← P1 letter (blue) is on the left of each hole,
+                     P2 letter (red) is on the right
+  ```
+  - **P1 keys (left hand):** Q W E / A S D / Z X C
+  - **P2 keys (right hand):** U I O / J K L / M , .
+  - Both layouts map to the same 3×3 grid spatially.
+  - Mouse is **disabled** for whacking (no way to know which player clicked).
+- The slamming hand is now an **SVG** that's colored blue for P1 or red
+  for P2 — instantly tells you who scored.
+- Code-lesson moment: every whack threads a `player` argument through
+  `bumpScore(player, by)` and `handSlam(hole, player)`. Same code, but
+  every action now has an *owner*.
 - **Kids' reaction:** *(fill in!)*
 
 ### v8 — ⏳ next (the big finale)
