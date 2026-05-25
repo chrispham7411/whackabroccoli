@@ -182,6 +182,55 @@
       30%  { transform: scale(1.3); opacity: 1; }
       to   { transform: scale(1.6); opacity: 0; }
     }
+
+    /* Cartoon hand slamming down onto the hole when you whack */
+    .hand-slam {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+      pointer-events: none;
+      z-index: 5;
+      animation: handSlam 320ms ease-out forwards;
+    }
+
+    @keyframes handSlam {
+      from { transform: translateY(-120px) rotate(-15deg) scale(1.8); opacity: 0; }
+      40%  { transform: translateY(0) rotate(0deg) scale(1.4); opacity: 1; }
+      75%  { transform: translateY(-8px) rotate(0deg) scale(1.3); opacity: 0.9; }
+      to   { transform: translateY(0) rotate(0deg) scale(1.2); opacity: 0; }
+    }
+
+    /* "YUCK!" or "YUM...NO!" reaction text */
+    .text-pop {
+      position: absolute;
+      left: 50%;
+      top: -60px;
+      transform: translateX(-50%);
+      font-size: 34px;
+      font-weight: 900;
+      font-style: italic;
+      pointer-events: none;
+      white-space: nowrap;
+      letter-spacing: 1px;
+      text-shadow:
+        2px 2px 0 #4a2c12,
+        -2px -2px 0 #4a2c12,
+        2px -2px 0 #4a2c12,
+        -2px 2px 0 #4a2c12;
+      animation: textPop 750ms ease-out forwards;
+    }
+
+    .text-pop.yuck { color: #7be05a; }
+    .text-pop.yum  { color: #ff7a7a; }
+
+    @keyframes textPop {
+      from  { transform: translate(-50%, 30px) scale(0.4) rotate(-12deg); opacity: 0; }
+      25%   { transform: translate(-50%, -5px) scale(1.25) rotate(6deg);  opacity: 1; }
+      to    { transform: translate(-50%, -50px) scale(1) rotate(-4deg);   opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -240,6 +289,78 @@
       setTimeout(() => b.remove(), 500);
     }
 
+    function handSlam(hole) {
+      const h = document.createElement('div');
+      h.className = 'hand-slam';
+      h.textContent = '✋';
+      hole.appendChild(h);
+      setTimeout(() => h.remove(), 320);
+    }
+
+    function textPop(hole, text, kind) {
+      const t = document.createElement('div');
+      t.className = 'text-pop ' + kind;
+      t.textContent = text;
+      hole.appendChild(t);
+      setTimeout(() => t.remove(), 750);
+    }
+
+    // --- Splat sound, synthesized on the fly (no audio files) ---
+    let audioCtx = null;
+    function getAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playSplat(isCandy) {
+      const ctx = getAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      // Noise burst — the splat texture
+      const dur = 0.18;
+      const bufSize = Math.floor(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(isCandy ? 700 : 1600, now);
+      filter.frequency.exponentialRampToValueAtTime(120, now + dur);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.55, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+      noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + dur);
+
+      // Low thud underneath
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isCandy ? 220 : 130, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(0.45, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      osc.connect(oscGain); oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+
     function removeCreature(hole, creature) {
       // Guard against double-removal (auto-hide + click can race).
       if (creature._gone) return;
@@ -254,13 +375,18 @@
 
     function whack(hole, creature) {
       if (creature._gone) return;
+      handSlam(hole);
       if (creature.dataset.kind === 'candy') {
         bumpScore(-1);
         floatScorePop(hole, '-1', true);
+        textPop(hole, 'YUM...NO!', 'yum');
         boom(hole);
+        playSplat(true);
       } else {
         bumpScore(1);
         floatScorePop(hole, '+1', false);
+        textPop(hole, 'YUCK!', 'yuck');
+        playSplat(false);
       }
       removeCreature(hole, creature);
     }

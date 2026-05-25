@@ -52,8 +52,8 @@ Each row is **one prompt** the kids give. Tick the box when it's shipped.
 | v3 | "When I click a broccoli, it disappears and a +1 floats up." | ✅ |
 | v3.5 | "It works with mouse but not with keyboard." (Q/W/E A/S/D Z/X/C) | ✅ |
 | v4 | "Sometimes candy pops up. If I hit it, a bomb goes off and −1." | ✅ |
-| v5 | "Add a hand cursor that slams down, a YUCK! popup, and a splat sound." | ⏳ |
-| v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | |
+| v5 | "Hand slam, YUCK!/YUM…NO! text, splat sound." | ✅ |
+| v6 | "Add a 30-second timer and a 'Game Over' screen showing the winner." | ⏳ |
 | v7 | "Make it two players: A/S/D/F vs J/K/L/;." | |
 | v8 | "When broccoli explodes, the bits fall down and pile up at the bottom." | |
 | v9 | Kids' wishlist (see below) | |
@@ -139,12 +139,23 @@ ChatGPT, or Gemini's image generator. Save the results into `images/` as:
   kind of thing was whacked. Same function, different outcomes.
 - **Kids' reaction:** *(fill in!)*
 
-### v5 — ⏳ next
-- Hand cursor that slams down on whack.
-- "YUCK!" text pop.
-- Splat sound effect.
-- This is the "polish" round — the game already works, now we make it
-  *feel* good.
+### v5 — shipped (the "feel" round)
+- ✋ hand emoji slams down onto the hole on every whack — drops from above,
+  rotates slightly, bounces, fades.
+- Green **"YUCK!"** text pops up for broccoli, red **"YUM...NO!"** for candy.
+- Splat sound effect! Synthesized in real-time with the **Web Audio API** —
+  no audio file needed. It's a noise burst (texture) layered with a low
+  sine-wave thud (impact). Candy splat is pitched higher than broccoli.
+- Lesson worth telling the kids: *sound effects can be made with math*. The
+  computer is literally calculating each tiny number that becomes the wave
+  your speakers play. We didn't download a sound — we *generated* one.
+- **Kids' reaction:** *(fill in!)*
+
+### v6 — ⏳ next
+- 30-second timer counts down at the top.
+- When it hits 0: stop the broccoli/candy from spawning, freeze the score,
+  show a "GAME OVER" overlay with the final score.
+- A "Play Again" button to reset and start fresh.
 
 ---
 
